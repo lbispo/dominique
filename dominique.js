@@ -1,64 +1,72 @@
-window.$ = function(a) {
+{ let i, j, k;
 	
-	NodeList.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
-	
-	Element.prototype.styles = function(a) {
-		for (var i in a) {
-			this.style[i] = a[i];
-		}
-	};
-	
-	Element.prototype.setAttributes = function(a) {
-		for (var i in a) {
-			this.setAttribute(i, a[i]);
-		}
-	};
-		
-	Element.prototype.property = function(a) {
-		for (var i in a) {
-			if (a[i].constructor == Object) {
-				for (var j in a[i]) {
-					this[i][j] = a[i][j];
+	Object.defineProperties(Element.prototype, {
+		'styles': {
+			configurable: true,
+			value: function(a) {
+				for (i in a) {
+					this.style[i] = a[i];
 				}
-			} else {
-				this[i] = a[i];
 			}
-		}
-	};
-		
-	Element.prototype.method = function(a) {
-		for (var i in a) {
-			if (a[i].constructor == Array) {
-				i = this[i](a[i][0], a[i][1]);
-			} else if (a[i].constructor == Object) {
-				for (var j in a[i]) {
-					if (a[i][j].constructor == Array) {
-						this[a[i]] = this[i][j](a[i][j][0], a[i][j][1]);
+		},
+		'setAttributes': {
+			configurable: true,
+			value: function(a) {
+				for (i in a) {
+					this.setAttribute(i, a[i]);
+				}
+			}
+		},
+		'setProps': {
+			configurable: true,
+			value: function(a) {
+				for (i in a) {
+					if (i.indexOf('.') > 0) {
+						j = i.split('.');
+						if (typeof this[j[0]][j[1]] === 'function') {
+							if (a[i].constructor == Array) {
+								for (k in a[i]) {
+									k = this[j[0]][j[1]](a[i][k]);
+								} 
+							} else {
+								return this[j[0]][j[1]](a[i]);
+							}
+						} else {
+							this[j[0]][j[1]] = a[i];
+						}
+					} else if (a[i].constructor == Array) {
+						i = this[i](a[i][0], a[i][1]);
+					} else if (typeof this[i] === 'function') {
+						i = this[i](a[i]);
+					} else if (a[i].constructor == Object) {
+						for (j in i) {
+							if (i == 'styles') {
+								this.style[j] = a[i][j];
+							} else {
+								this.setAttribute(j, a[i][j]);
+							}
+						}
 					} else {
-						this[a[i]] = this[i][j](a[i][j]);
+						this[i] = a[i];
 					}
 				}
-			} else {
-				i = this[i](a[i]);
 			}
 		}
-	};
+	});
 	
-	if (a == 'html') {
-		return document.documentElement;
-	} else if (a == 'body') {
-		return document.body;
-	} else if (a.startsWith('<')) {
+}
+
+window.$ = function(a) {
+	
+	let b = a.split(' ').pop();
+	
+	if (a.startsWith('<')) {
 		a = a.substring(1, a.length - 1);
 		return document.createElement(a);
-	} else if (a.startsWith('#')) {
-		if (a.indexOf(' ') >= 0) {
-			return document.querySelectorAll(a);
-		} else {
-			return document.querySelector(a);
-		}
+	} else if ((b.indexOf('#') >= 0) || (a == 'html') || (a == 'body')) {
+		return document.querySelector(a);
 	} else {
 		return document.querySelectorAll(a);
 	}
 	
-}
+};

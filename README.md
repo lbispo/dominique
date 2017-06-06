@@ -2,123 +2,35 @@
 
 ## A micro DOM library
 	
-**Dominique** is a tiny JavaScript library who thinks most of the JavaScript DOM API is a-ok, and doesn't need any sweeping and opinionated framework to take over and start bossing it around. But there are a few things about the DOM that are just, well. Yeah. In need.
+**Dominique** is a tiny JavaScript library who thinks most of the JavaScript DOM API is a-ok, and doesn't really need any sweeping, opinionated framework to take over and start bossing it around. But there *are* a few things about the DOM that are just, well, yeah. In need.
 
-**Important:** Dominique may not play well with other libraries that use `$`.
-
-**Also:** If you need to worry about really junk browsers, then you&rsquo;d better include an <span title="ECMAScript6">ES6</title> polyfill. Dominique is into Zen: she lives in the now and has no regrets.
+**Note:**  Dominique is into Zen: she lives in the now and has no regrets. Include an <span title="ECMAScript 6">ES6</span> polyfill at your discretion.
 
 ## Selectors.
 
-Users of popular JavaScript libraries will be well familiar with such selectors as `$('p')`, `$('#clickme')`, `$('.ma-cherie-amour')`, etc. Use this `$` selector pattern with JavaScript&rsquo;s awesome DOM properties and methods:
-
-#### Examples
+Users of popular JavaScript libraries will be familiar with selectors such as `$('p')`, `$('#clickme')`, `$('.ma-cherie-amour')`, etc. Use this `$` selector pattern with JavaScript&rsquo;s awesome DOM properties and methods:
 
 	$('html').lang = 'en';
-	$('body').classList.add('dominique');
-	$('#clickme').addEventListener('click', function() {
-		alert('Wahoo!');
-	});
-
-**Note:** `$('html')` selects for `document.documentElement`; `$('body')` selects for `document.body`.
-
-## Looping.
-
-If you need to loop through an HTMLCollection, Dominique allows you to use the newer and simpler `for...of` loop (instead of the classic but bothersome `for` loop in vanillaJS):
-
-#### Example
-
-	for (var querybobs of $('.querybob')) {
-		querybobs.innerHTML = 'Hi, Bob!';
+	$('#clickme').focus();
+	for (var i of $('.querybob')) {
+		i = 'Hi, Bob!';
 	}
 
-If you need to grab just one element from a collection, go array-like:
-
-#### Example
-
-	$('.querybob')[1].style.color = 'lightSeaGreen';
+**Note:** `$('html')` selects for `document.documentElement`; `$('body')` selects for `document.body`. All other tag, class, and compound selectors (in which the last element in the list is not an ID) will return an HTMLCollection; hence the loop above.
 
 ## Element creation.
 
-To access `document.createElement()`, simply include pointy brackets around a tag selector. To create an `h3`, for example, use `$('<h3>')`:
+To create an element, just include pointy brackets around a tag selector. To make an `li`, for example, use `$('<li>')`:
 
-#### Example
+	let li = $('<li>');
 
-	$('#page').appendChild($('<h3>')).innerHTML = 'Footer:';
+No need to include those slashes or closing tags, either. Dominique thinks that&rsquo;s just silly.
 
-## Pluralizer properties and methods.
-
-Dominique includes four pluralizer methods: `property()`, `method()`, `setAttributes()`, and `styles()`.
-
-### `property()`
-
-With the `property()` method, you can pluralize settable static properties using standard object notation:
-
-	textContent: 'Later, Bob.'
-
-Use a nested object for native chains of two methods, (in particular `style[x]`):
-
-	style: {
-		color: 'crimson'
-	}
-
-#### Example
-
-	$('#page').appendChild($('<footer>')).property({
-		textContent: 'Later, Bob.',
-		className: 'footer-stuff',
-		style: {
-			color: 'crimson',
-			'font-style': 'italic'
-		}
-	});
-
-### `method()`
-
-With `method()`, you can pluralize settable methods.
-
-#### Variations:
-
-Use a single value for methods possessing a single argument:
-
-	appendChild: $('<p>')
-
-Use an empty string for methods possessing no arguments:
-
-	focus: ''
-
-Use an array of strings for methods possessing two arguments:
-
-	setAttribute: ['title', 'page-stuff']
-
-Use a nested object for native chains of two methods, e.g. `classList.add`:
-
-	classList: {
-		add: 'dominique'
-	}
-
-#### Examples:
-		
-	$('#clickme').method({
-		focus: '',
-		addEventListener: ['click', function() {
-			alert('Wahoo!');
-		}]
-	});
-
-	$('#page').method({
-		setAttribute: ['title', 'page-stuff'],
-		classList: {
-			add: ['dominique', 'ma-cherie-amour'],
-			remove: 'page'
-		}
-	});
+## Pluralizer methods.
 
 ### `setAttributes()` and `styles()`
 
-Set multiple attributes with `setAttributes()` (note the plural):
-
-#### Example:
+Use object notation to set multiple HTML attributes with `setAttributes()` (note the plural):
 	
 	$('#clickme').setAttributes({
 		type: 'button',
@@ -126,23 +38,61 @@ Set multiple attributes with `setAttributes()` (note the plural):
 		'data-trick': 'gotcha'
 	});
 
-Set multiple attributes with `styles()`:
+Set multiple CSS styles with `styles()`:
 
-#### Example:
+	$('header')[0].styles({
+		color: 'PaleVioletRed',
+		backgroundColor: 'DarkRed',
+		padding: '.1em 1em'
+	});
 
-	$('#page').styles({
-		backgroundColor: 'blanchedAlmond',
-		padding: '1em'
+### `setProps()`
+
+`setProps()` allows you to set multiple properties and/or methods:
+
+	$('#footer').setProps({
+		textContent: 'Later, Bob!',
+		className: 'footer-stuff',
+		appendChild: $('<span>')
+	});
+
+Use an empty string for methods with no arguments, or an array of values for methods with two or more arguments:
+
+	$('#clickme').setProps({
+		focus: '',
+		addEventListener: ['click', function() {
+			alert('Wahoo!’)
+		}, true]
+	});
+
+Use quotes around property strings containing punctuation (of course):
+
+	$('body').setProps({
+		'classList.add': ['dominique', 'ma-cherie-amour'],
+		'style.fontFamily': 'Georgia, serif'
+	});
+
+You can also nest both `setAttributes()` and `styles()` within `setProps()`&mdash;natch!
+		
+	$('footer')[0].setProps({
+		setAttributes: {
+			title: 'Footer stuff',
+			'data-role': 'contentinfo'
+		},
+		styles: {
+			color: 'DarkRed',
+			borderTop: 'thin solid'
+		}
 	});
 
 Pretty sweet, huh?
 
-**Note:** For now, at least, these four pluralizer methods &ndash; `property()`, `method()`, `styles()`, and `setAttributes()` &ndash; are separate from each other, and cannot be nested.
+**Final note:** Yes, all of Dominique&rsquo;s methods extend the DOM (but only in the most responsible, <span title=“ECMAScript 5”>ES5</span>-approved way). Yes, some people still think that&rsquo;s a bad idea. No, you don&rsquo;t have to use them.
 
-## Okay, um... filesize?
+## Okay, um&hellip; filesize?
 
-Oh, yeah: the filesize of Dominique, minified, comes screaming in at 900-odd bytes. Yes, **bytes.** As in less than one kayBee. That&rsquo;s like beating a four-minute mile. Woo-hoo!
+Oh, yeah: the filesize of **Dominique**, minified, comes screaming in at 900-odd bytes. Yes, **bytes.** As in less than one Kay bee. That&rsquo;s like beating a four-minute mile. Woo-hoo!
 
-## Will you, won&rsquo;t you beta test?
+## Will you, won&rsquo;t you
 
 Go on, take **Dominique** out for coffee. Let us know how it goes.
