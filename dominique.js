@@ -1,3 +1,5 @@
+//https://github.com/lbispo/dominique
+
 { let i, j, k;
 	
 	Object.defineProperties(Element.prototype, {
