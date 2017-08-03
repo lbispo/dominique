@@ -29,7 +29,7 @@
 									k = this[j[0]][j[1]](a[i][k]);
 								} 
 							} else {
-								return this[j[0]][j[1]](a[i]);
+								i = this[j[0]][j[1]](a[i]);
 							}
 						} else {
 							this[j[0]][j[1]] = a[i];

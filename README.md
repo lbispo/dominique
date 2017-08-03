@@ -13,7 +13,7 @@ Users of popular JavaScript libraries will be familiar with selectors such as `$
 	$('html').lang = 'en';
 	$('#clickme').focus();
 	for (var i of $('.querybob')) {
-		i = 'Hi, Bob!';
+		i.title = 'Hi, Bob!';
 	}
 
 **Note:** `$('html')` selects for `document.documentElement`; `$('body')` selects for `document.body`. All other tag, class, and compound selectors (in which the last element in the list is not an ID) will return an HTMLCollection; hence the loop above.
