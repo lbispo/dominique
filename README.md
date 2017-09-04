@@ -2,96 +2,137 @@
 
 ## A micro DOM library
 	
-**Dominique** is a tiny JavaScript library who thinks most of the JavaScript DOM API is a-ok, and doesn't really need any sweeping, opinionated framework to take over and start bossing it around. But there *are* a few things about the DOM that are just, well, yeah. In need.
+**Dominique** is a tiny JavaScript library who thinks most of the JavaScript DOM API is A-OK, and doesn't really need any sweeping, opinionated framework to take over and start bossing it around. But there *are* a few things about the DOM that are just, well, yeah. In need.
 
 **Note:**  Dominique is into Zen: she lives in the now and has no regrets. Include an <span title="ECMAScript 6">ES6</span> polyfill at your discretion.
 
-## Selectors.
+## The dollar loop
 
-Users of popular JavaScript libraries will be familiar with selectors such as `$('p')`, `$('#clickme')`, `$('.ma-cherie-amour')`, etc. Use this `$` selector pattern with JavaScript&rsquo;s awesome DOM properties and methods:
+Users of popular JavaScript libraries will be familiar with selectors such as `$('#click-me')`, `$('.ma-cherie-amour')`, etc. Dominique has a different take on this pattern. Include callback function as a second argument to loop through a selector:
 
-	$('html').lang = 'en';
-	$('#clickme').focus();
-	for (var i of $('.querybob')) {
-		i.title = 'Hi, Bob!';
-	}
+```javascript
+$('p', function(p) {
+	p.style.color = 'DarkRed';
+});
+```
 
-**Note:** `$('html')` selects for `document.documentElement`; `$('body')` selects for `document.body`. All other tag, class, and compound selectors (in which the last element in the list is not an ID) will return an HTMLCollection; hence the loop above.
+More values can be passed into the function as needed:
 
-## Element creation.
+```javascript
+$('[type=hidden]', (i, j=user.input) => {
+	i.setAttribute('value', j);
+});
+```
 
-To create an element, just include pointy brackets around a tag selector. To make an `li`, for example, use `$('<li>')`:
+You can access the numerical index/key/name of iterated items with `this` (but not within arrow functions, which have lexical scope&mdash;send your complaints and/or compliments to the good folks at <span title="https://www.ecma-international.org/">ECMA</span>):
+	
+```javascript
+let names = ['Bob', 'Carl', 'Fred'];
+$('li.names', function(li) {
+	li.textContent = names[this];
+});
+```
 
-	let li = $('<li>');
+### The dollar without the loop.
+
+You can optionally omit the callback to retrieve only the first instance of a selector:
+
+```javascript
+$('#page > :first-child').id = 'site-id';
+```
+
+**Note:** Because this doesn&rsquo;t return a collection, you can&rsquo;t use the `$` constructor in ordinary JavaScript loops. Sorry about that; Dominique had to choose. Take a look at the handy loops above and tell her you really mind.
+
+You can also use `$` to loop through objects, arrays, maps, sets, or numbers.
+
+### Element creation.
+
+To create an element, just include pointy brackets around a tag name and pass it to `$`. To make an `li`, for example, use `$('<li>')`:
+
+```javascript
+names.forEach(function() {
+	$('ul').appendChild($('<li>')).className = 'names';
+});
+```
 
 No need to include those slashes or closing tags, either. Dominique thinks that&rsquo;s just silly.
 
-## Pluralizer methods.
+## Aggregator functions.
 
-### `setAttributes()` and `styles()`
+Make your code a little easier on the eyes.
 
-Use object notation to set multiple HTML attributes with `setAttributes()` (note the plural):
-	
-	$('#clickme').setAttributes({
-		type: 'button',
-		title: 'pretty-please',
-		'data-trick': 'gotcha'
-	});
+### `setAttributes()`
+
+Set multiple HTML attributes using object notation with `setAttributes()` (note the plural):
+
+```javascript
+$('#click-me').setAttributes({
+	type: 'button',
+	title: 'Pretty please?',
+	'data-trick': 'gotcha'
+});
+```
+
+### `styles()`
 
 Set multiple CSS styles with `styles()`:
 
-	$('header')[0].styles({
+```javascript
+$('header, footer', i => {
+	i.styles({
 		color: 'PaleVioletRed',
 		backgroundColor: 'DarkRed',
-		padding: '.1em 1em'
+		padding: '.5em 1em'
 	});
+}
+```
 
 ### `setProps()`
 
-`setProps()` allows you to set multiple properties and/or methods:
+This method allows you to set multiple DOM properties and/or methods:
 
-	$('#footer').setProps({
-		textContent: 'Later, Bob!',
-		className: 'footer-stuff',
-		appendChild: $('<span>')
+```javascript
+for (let i of document.body.children) {
+	i.setProps({
+		title: 'Page stuff',
+		className: 'page',
+		appendChild: $('<footer>')
 	});
+}
+```
 
 Use an empty string for methods with no arguments, or an array of values for methods with two or more arguments:
 
-	$('#clickme').setProps({
-		focus: '',
-		addEventListener: ['click', function() {
-			alert('Wahoo!’)
-		}, true]
-	});
-
-Use quotes around property strings containing punctuation (of course):
-
-	$('body').setProps({
-		'classList.add': ['dominique', 'ma-cherie-amour'],
-		'style.fontFamily': 'Georgia, serif'
-	});
+```javascript
+$('#click-me').setProps({
+	focus: '',
+	'classList.add': ['dominique', 'ma-cherie-amour'],
+	'style.fontFamily': 'Dominique, serif'
+});
+```
 
 You can also nest both `setAttributes()` and `styles()` within `setProps()`&mdash;natch!
-		
-	$('footer')[0].setProps({
-		setAttributes: {
-			title: 'Footer stuff',
-			'data-role': 'contentinfo'
-		},
-		styles: {
-			color: 'DarkRed',
-			borderTop: 'thin solid'
-		}
-	});
+	
+```javascript	
+$('footer').setProps({
+	setAttributes: {
+		title: 'Footer stuff',
+		role: 'contentinfo'
+	},
+	styles: {
+		color: 'DarkRed',
+		borderTop: 'thin solid'
+	}
+});
+```
 
 Pretty sweet, huh?
 
-**Final note:** Yes, all of Dominique&rsquo;s methods extend the DOM (but only in the most responsible, <span title=“ECMAScript 5”>ES5</span>-approved way). Yes, some people still think that&rsquo;s a bad idea. No, you don&rsquo;t have to use them.
+**A final note:** Yes, all of Dominique&rsquo;s methods extend the DOM (but only in the most responsible, <span title="ECMAScript 5">ES5</span>-approved way). Yes, some people still think that&rsquo;s a bad idea. No, you don&rsquo;t have to use them.
 
 ## Okay, um&hellip; filesize?
 
-Oh, yeah: the filesize of **Dominique**, minified, comes screaming in at 900-odd bytes. Yes, **bytes.** As in less than one Kay bee. That&rsquo;s like beating a four-minute mile. Woo-hoo!
+Oh, yeah: the filesize of Dominique, minified, comes screaming in at just over a single kaybee. Woo-hoo!
 
 ## Will you, won&rsquo;t you
 
