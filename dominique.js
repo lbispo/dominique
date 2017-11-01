@@ -1,97 +1,77 @@
-// http://github.com/lbispo/dominique
+/*** Dominique, the micro DOM library     ***/
+/*** https://github.com/lbispo/dominique/ ***/
 
-{ let i, j, k;
-	
-	Object.defineProperties(Element.prototype, {
-		'styles': {
-			configurable: true,
-			value: function(a) {
-				for (i in a) {
-					this.style[i] = a[i];
-				}
-			}
-		},
-		'setAttributes': {
-			configurable: true,
-			value: function(a) {
-				for (i in a) {
-					this.setAttribute(i, a[i]);
-				}
-			}
-		},
-		'setProps': {
-			configurable: true,
-			value: function(a) {
-				for (i in a) {
-					if (i.indexOf('.') > 0) {
-						j = i.split('.');
-						if (typeof this[j[0]][j[1]] === 'function') {
-							if (a[i].constructor === Array) {
-								for (k in a[i]) {
-									k = this[j[0]][j[1]](a[i][k]);
-								} 
-							} else {
-								i = this[j[0]][j[1]](a[i]);
-							}
-						} else {
-							this[j[0]][j[1]] = a[i];
-						}
-					} else if (a[i].constructor === Array) {
-						i = this[i](a[i][0], a[i][1], a[i][2]);
-					} else if (typeof this[i] === 'function') {
-						i = this[i](a[i]);
-					} else if (a[i].constructor === Object) {
-						for (j in i) {
-							if (i === 'styles') {
-								this.style[j] = a[i][j];
-							} else {
-								this.setAttribute(j, a[i][j]);
-							}
-						}
-					} else {
-						this[i] = a[i];
-					}
-				}
-			}
-		}
-	});
-	
-}
+	/*** $ function foundry ***/
 
-window.$ = function(a, fn) {
-	
-	let i, j;
-	
-	if (a.constructor === Number) {
-		for (i = 0; i < a; i++) {
-			fn.call(i, a[i]);
+function $(a = {}, foo, fn) {
+	let i;
+	function y(x) {
+		foo(x);
+		if (fn !== undefined) {
+			fn.call(x);
 		}
-	} else if (a.constructor === Object) {
-		for (i in a) {
-			fn.call(i, a[i]);
-		}
-	} else if (a.constructor === Map) {
-		for ([i, j] of a) {
-			fn.call(i, j);
-		}
-	} else if (a.constructor === Set) {
-		for (i of a) {
-			fn.call(a[i], i);
-		}
-	} else if (arguments.length == 1) {
-		if (a.startsWith('<')) {
-			a = a.substring(1, a.length - 1);
-			return document.createElement(a);
-		} else {
-			return document.querySelector(a);
-		}
-	} else {
+	}
+	if ((a.constructor === String) && (arguments.length === 1)) {
+		return document.querySelector(a);
+	}
+	if ((a.length !== undefined) || (a.constructor === Set)) {
 		if (a.constructor === String) {
 			a = document.querySelectorAll(a);
 		}
-		for (i = 0; i < a.length; i++) {
-			fn.call(i, a[i]);
+		for (i of a) {
+			y(i);
 		}
+	} else if (a.constructor === Object) {
+		for (i in a) {
+			y(i);
+		}
+	} else if (a.constructor === Map) {
+		for (i of a.keys()) {
+			y(i);
+		}
+	} else if (a.constructor === Number) {
+		for (i = 0; i < a; i++) {
+			y(i);
+		}
+	} else {
+		y(a);
 	}
-	
+}
+
+	/* create */
+
+function create(a, fn) {
+	a = document.createElement(a);
+	$(a, function() {}, fn);
+	return a;
+}
+
+	/* attributes */
+
+function attributes(a, b) {
+	$(a, function(i) {
+		for (let attribute in b) {
+			i.setAttribute(attribute, b[attribute]);
+		}
+	});
+}
+
+	/* properties */
+
+function properties(a, obj, fn) {
+	$(a, i => {
+		for (let j in obj) {
+			i.dataset[j] = obj[j];
+		}
+	}, fn);
 };
+
+	/* styles */
+
+function styles(a, b, fn) {
+	$(a, function(i) {
+		for (let styl in b) {
+			i.style[styl] = b[styl];
+		}
+	}, fn);
+}
