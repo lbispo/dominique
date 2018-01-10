@@ -2,116 +2,137 @@
 
 ## A micro DOM library.
 
-**Dominique** is a tiny JavaScript library of helper functions for DOM (and other collection) iteration; element creation; setting multiple properties; and custom plugin creation.
+**Dominique** is a tiny JavaScript library of helper functions for the DOM, emphasizing plugin creation and manipulation of element properties and attributes. **Note:**  Dominique is into Zen: she lives in the now and has no regrets. Include an <span title="ECMAScript">ES</span> polyfill at your discretion.
 
-**Note:**  Dominique is into Zen: she lives in the now and has no regrets. Include an <span title="ECMAScript 6">ES6</span> polyfill at your discretion.
+### Plugin creation.
 
-### The `$` loop.
+#### `$(collection[, callback(item | key)])`
 
-#### `$(collection[, callback])`
+Creates a custom plugin.
 
-```javascript
-$('p', p => p.style.color = 'DarkRed');
+```js
+const myPlugin = (a, fn) => {
+	$(a, i => {
+		//doSomething(i);
+	}, fn);
+};
 ```
 
-This example loops through a CSS selector, but `$` can also loop through an HTMLCollection (e.g. `document.body.children`), Array, Object, Set, Map, or Number. `$` is the only Dominique function that reserves a parameter for the current item in iteration.
+**Note:** In the above example, `fn` creates a callback function for the plugin.
 
-#### The dollar without the loop.
+`$` can also be used as a convenient loop for a CSS selector, HTMLCollection, NodeList, Set, or Array (items); Object or Map (keys); or Number (integers):
 
-```javascript
-$('#page > :first-child').id = 'site-id';
+```js
+$('div', div => {
+	div.title = 'I am a div.';
+});
 ```
 
-Selects for a single element.
+Returns a single element:
 
-### Element creation.
+```js
+$('#page')
+```
+
+### Elements.
 
 #### `create(selector[, callback])`
 
 ```js
 create('footer', function() {
-	this.innerHTML = '&copy; 2017 Dominique.';
-	$('body').appendChild(this);
+	this.textContent = '&copy; 2017 Dominique';
+	$('#page').appendChild(this);
 });
 ```
 
-**Note:** Dominique has taken the plunge: she has sworn off methods and thrown in with helper functions instead. While this may increase the risk of variable name collision in the short term, Dominique has taken the longer view&mdash;namespaced ES6 modules are coming! Wait for it&hellip;
+Returns the new element:
 
 ```js
-const domi = (function() {
-	return {
-		$: $,
-		create: create //etc.
-	}
-})();
-domi.$('body').appendChild(domi.create('footer'));
+create('footer')
 ```
 
-In the meantime, you can namespace Dominique&rsquo;s functions yourself with something like the above.
+### Compound functions.
 
-### Multiples.
+**Note:** In all compound functions, an object literal may be used in place of `Map`.
 
-#### `attributes(selector, Object)`
+#### `attributes(selector, Map | Object)`
 
-**Note:** `setAttributes` has been deprecated and replaced with `attributes`.
-
-```javascript
-attributes('input#click-me', {
-	type: 'button',
-	title: 'Pretty please?'
-});
-```
-
-#### `properties(selector, Object)`
-
-**Note:** `setProps` has been deprecated and replaced with `properties`.
-
-```javascript
-properties(document.body, {
-	libraryEponym: 'Dominique',
-	salutation: 'Grand Poobah'
-});
-```
-
-This produces `data-*` attributes on the selector:
-
-```html
-<body data-library-eponym="Dominique" data-salutation="Grand Poobah"></body>
-```
-
-#### `styles(selector, Object)`
-
-```javascript
-styles('header, footer', {
-	color: 'PaleVioletRed',
-	background: 'DarkRed'
-});
-```
-
-
-### Plugins.
+Adds or removes one or more attributes. `this` references the `attributes` object.
 
 ```js
-const colorize = (a, b, fn) => {
-	$(a, i => {
-		i.style.color = b;
-	}, fn);
-};
+attributes('a', new Map()
+	.set('role', false)
+	.set('href', function() {
+		return '#' + this.title.value;
+	})
+);
 ```
 
-An example custom plugin. **Note:** The `fn` parameter, optional, provides for a callback:
+**Note:** There are three values that will remove an attribute:
 
 ```js
-colorize('header h1', brandColor, function() {
-	this.textContent = this.style.color;
+attributes('body', { role: false });
+attributes('body', { role: null });
+attributes('body', { role: '' });
+```
+
+These will also work for removing classes or styles.
+
+#### `classes(selector, Map | Object)`
+
+Adds, removes, replaces, or toggles one or more classes. `this` references the `classList` object.
+
+```js
+classes('body', new Map()
+	.set('ma-cherie-amour', true)
+	.set('no-js', false)
+	.set('replace-me', 'replaced')
+	.set('toggled', function() {
+		return this.contains('toggled') ? false : true;
+	})
+);
+```
+
+**Note:** Dominique provides a shorthand for toggling a class:
+
+```js
+classes('body', new Map()
+	.set('toggled', {})
+);
+```
+
+#### `properties(selector, Map | Object)`
+
+Adds one or more `dataset` properties (and their corresponding `data-*` attributes). `this` references the `dataset` object.
+
+```js
+properties('body', {
+	username: loginHandler.user,
+	admin() { return this.username === 'Dominique' ? true : false }
 });
 ```
+
+**Note:** `false` does not remove the property.
+
+#### `styles(selector, Map | Object)`
+
+Adds or removes one or more styles. `this` references the `style` object.
+
+```js
+styles('header', new Map()
+	.set('color', function() {
+		return this.background === 'darkred' ? 'white' : false;
+	})
+);
+```
+
+### Summary.
 
 Pretty sweet, huh?
 
 ### Okay, um&hellip; filesize?
 
-Oh, yeah: the filesize of Dominique, minified, comes screaming in at less than a single kaybee. Woo-hoo!
+Oh, yeah: the filesize of Dominique, minified, comes screaming in at less than a kaybee and a half. Woo-hoo!
 
 ### Will you, won&rsquo;t you
 
