@@ -5,37 +5,39 @@
 
 let $ = function(a, foo, fn) {
 	a = a || {};
-	let i;
+	let i, j = [], k = a.constructor;
+	
 	function y(x) {
-		foo(x);
-		if (fn !== undefined) {
+		if (fn) {
 			fn.call(x);
 		}
+		return foo(x);
 	}
-	if ((a.constructor === String) && (arguments.length === 1)) {
-		return document.querySelector(a);
-	}
-	if ((a.length !== undefined) || (a.constructor === Set)) {
-		if (a.constructor === String) {
-			a = document.querySelectorAll(a);
-		}
-		for (i of a) {
-			y(i);
-		}
-	} else if (a.constructor === Object) {
-		for (i in a) {
-			y(i);
-		}
-	} else if (a.constructor === Map) {
-		for (i of a.keys()) {
-			y(i);
-		}
-	} else if (a.constructor === Number) {
+	
+	if (k === String && arguments.length === 1) {
+		return document.querySelector(a) || {};
+	} else if (k === String) {
+		a = document.querySelectorAll(a);
+		a = new Set(a);
+	} else if (k === Map) {
+		a = a.keys();
+	} else if (typeof a[Symbol.iterator] === 'function') {
+		a = new Set(a);
+	} else if (k === Object) {
+		a = Object.keys(a);
+	} else if (k === Number) {
 		for (i = 0; i < a; i++) {
-			y(i);
+			j.push(i);
 		}
+		a = Array.from(j);
+	}
+	
+	if (typeof a[Symbol.iterator] !== 'function') {
+		return y(a);
 	} else {
-		y(a);
+		return [...a].map(i => {
+			return y(i);
+		}).join('');
 	}
 };
 

@@ -2,11 +2,11 @@
 
 ## A micro DOM library.
 
-**Dominique** is a tiny JavaScript library of helper functions for the DOM, emphasizing plugin creation and manipulation of element properties and attributes. **Note:**  Dominique is into Zen: she lives in the now and has no regrets. Include an <span title="ECMAScript">ES</span> polyfill at your discretion.
+**Dominique** is a tiny JavaScript library of helper functions for the DOM, emphasizing plugin creation and manipulation of elements and attributes. **Note:**  Dominique is into Zen: she lives in the now and has no regrets. Include an <span title="ECMAScript">ES</span> polyfill at your discretion.
 
 ### Plugin creation.
 
-#### `$(collection[, callback(item | key)])`
+#### The `$` loop.
 
 Creates a custom plugin.
 
@@ -20,15 +20,15 @@ const myPlugin = (a, fn) => {
 
 **Note:** In the above example, `fn` creates a callback function for the plugin.
 
-`$` can also be used as a convenient loop for a CSS selector, HTMLCollection, NodeList, Set, or Array (items); Object or Map (keys); or Number (integers):
+`$` can loop through a CSS selector, NodeList, HTMLCollection, HTMLElement, Set, or Array (items); Object or Map (keys); or Number (integers). Returns joined values for use with template literals:
 
 ```js
-$('div', div => {
-	div.title = 'I am a div.';
+$('ul.jedi-names', ul => {
+	ul.innerHTML = $(jedi, j => `<li>${j.name}</li>`);
 });
 ```
 
-Returns a single element:
+Returns a single Element:
 
 ```js
 $('#page')
@@ -51,13 +51,13 @@ Returns the new element:
 create('footer')
 ```
 
-### Compound functions.
+### Attributes.
 
-**Note:** In all compound functions, an object literal may be used in place of `Map`.
+**Note:** In all **attributes** functions, an object literal may be used in place of `Map`. Returned values are expected from callbacks.
 
 #### `attributes(selector, Map | Object)`
 
-Adds or removes one or more attributes. `this` references the `attributes` object.
+Sets or removes one or more attributes. `this` references the `attributes` object.
 
 ```js
 attributes('a', new Map()
@@ -68,29 +68,15 @@ attributes('a', new Map()
 );
 ```
 
-**Note:** There are three values that will remove an attribute:
-
-```js
-attributes('body', { role: false });
-attributes('body', { role: null });
-attributes('body', { role: '' });
-```
-
-These will also work for removing classes or styles.
-
 #### `classes(selector, Map | Object)`
 
 Adds, removes, replaces, or toggles one or more classes. `this` references the `classList` object.
 
 ```js
-classes('body', new Map()
-	.set('ma-cherie-amour', true)
-	.set('no-js', false)
-	.set('replace-me', 'replaced')
-	.set('toggled', function() {
-		return this.contains('toggled') ? false : true;
-	})
-);
+classes('body', {
+	'replace-me': 'replaced',
+	toggled() { return this.contains('toggled') ? false : true }
+});
 ```
 
 **Note:** Dominique provides a shorthand for toggling a class:
@@ -110,16 +96,23 @@ properties('body', {
 	username: loginHandler.user,
 	admin() { return this.username === 'Dominique' ? true : false }
 });
+
+properties('body', new Map()
+	.set('username', loginHandler.user)
+	.set('admin', function() {
+		return this.username === 'Dominique' ? true : false;
+	})
+);
 ```
 
-**Note:** `false` does not remove the property.
+**Note:** A value of `false`, unlike the other attribute functions, does not remove the property.
 
 #### `styles(selector, Map | Object)`
 
-Adds or removes one or more styles. `this` references the `style` object.
+Sets or removes one or more styles. `this` references the `style` object.
 
 ```js
-styles('header', new Map()
+styles('header', new Map(
 	.set('color', function() {
 		return this.background === 'darkred' ? 'white' : false;
 	})
@@ -132,7 +125,7 @@ Pretty sweet, huh?
 
 ### Okay, um&hellip; filesize?
 
-Oh, yeah: the filesize of Dominique, minified, comes screaming in at less than a kaybee and a half. Woo-hoo!
+Oh, yeah: the filesize of Dominique, minified, comes screaming in at less than one and a half kaybees. Woo-hoo!
 
 ### Will you, won&rsquo;t you
 
