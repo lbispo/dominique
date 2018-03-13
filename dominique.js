@@ -1,82 +1,101 @@
 /*** Dominique, the micro DOM library     ***/
 /*** https://github.com/lbispo/dominique/ ***/
 
-	/*** dominique function foundry ***/
+	/** dominique function foundry **/
 
-let $ = function(a, foo, fn) {
+let $ = (a, foo, fn) => {
 	a = a || {};
-	let i, j = [], k = a.constructor;
 	
-	function y(x) {
-		if (fn) {
-			fn.call(x);
-		}
-		return foo(x);
-	}
+	let i, newArr, newMap = new Map(), k = a.constructor;
 	
-	if (k === String && arguments.length === 1) {
-		return document.querySelector(a) || {};
-	} else if (k === String) {
+	if (k === String) {
 		a = document.querySelectorAll(a);
-		a = new Set(a);
+		for (let i = 0; i < a.length; i++) {
+			newMap.set(i, a[i]);
+		}
 	} else if (k === Map) {
-		a = a.keys();
+		newMap = a;
 	} else if (typeof a[Symbol.iterator] === 'function') {
-		a = new Set(a);
+		newArr = Array.from(a);
+		newArr.forEach((item, i) => {
+			newMap.set(i, item);
+		});
 	} else if (k === Object) {
-		a = Object.keys(a);
+		for (i in a) {
+			newMap.set(i, a[i]);
+		}
 	} else if (k === Number) {
 		for (i = 0; i < a; i++) {
-			j.push(i);
+			newMap.set(i, i);
 		}
-		a = Array.from(j);
+	} else {
+		newMap.set(0, a);
 	}
 	
-	if (typeof a[Symbol.iterator] !== 'function') {
-		return y(a);
+	if (!foo) {
+		return newMap;
 	} else {
-		return [...a].map(i => {
-			return y(i);
+		return [...newMap.keys()].map(i => {
+			if (fn) {
+				fn.call(newMap.get(i));
+			}
+			
+			return foo(newMap.get(i), i);
 		}).join('');
 	}
 };
 
-//dominique's little helpers
-
-let dominique = {
-	funcify: function(x, y, z) {
-		if (x && x.constructor === Function) {
-			x = x.call(z[y]);
-		}
-		return x;
-	},
-	mapify: function(x) {
-		if (x.constructor === Object) {
-			x = new Map(Object.entries(x));
-		}
-		return x;
-	}
-};
-
-	/* elements */
+	/** elements **/
 
 //create
 
 let create = (a, fn) => {
+	if (a === '') {
+		a = false;
+	}
 	a = document.createElement(a);
+	
 	$(a, function() {}, fn);
+	
 	return a;
 };
 
-	/* compound functions */
+//step
+
+let step = (a, fn) => {
+	a = $(a).get(0);
+	a = a || {};
+	
+	$(a, i => {}, fn);
+	
+	return a;
+};
+
+/////walk
+
+let walk = (a, fn) => {
+	let newSet = new Set();
+	
+	$(a, i => {
+		if (i instanceof HTMLElement) {
+			newSet.add(i);
+		}
+	});
+	
+	$(newSet, i => {}, fn);
+	
+	return newSet;
+};
+
+	/** attributes **/
 
 //attributes
 
 let attributes = (a, b) => {
-	b = dominique.mapify(b);
 	$(a, i => {
-		b.forEach((val, attr) => {
-			val = dominique.funcify(val, 'attributes', i);
+		$(b).forEach((val, attr) => {
+			val = val.constructor === Function ? val.call(i.attributes) : val;
+			
 			if (val === false) {
 				i.removeAttribute(attr);
 			} else {
@@ -89,11 +108,11 @@ let attributes = (a, b) => {
 //classes
 
 let classes = (a, b) => {
-	b = dominique.mapify(b);
 	$(a, i => {
-		b.forEach((val, attr) => {
-			val = dominique.funcify(val, 'classList', i);
-			if (val === false) {
+		$(b).forEach((val, attr) => {
+			val = val.constructor === Function ? val.call(i.classList) : val;
+			
+			if (!val) {
 				i.classList.remove(attr);
 			} else if (val === true) {
 				i.classList.add(attr);
@@ -109,10 +128,10 @@ let classes = (a, b) => {
 //properties
 
 let properties = function(a, b) {
-	b = dominique.mapify(b);
 	$(a, i => {
-		b.forEach((val, prop) => {
-			val = dominique.funcify(val, 'dataset', i);
+		$(b).forEach((val, prop) => {
+			val = val.constructor === Function ? val.call(i.dataset) : val;
+			
 			i.dataset[prop] = val;
 		});
 	});
@@ -121,10 +140,10 @@ let properties = function(a, b) {
 //styles
 
 let styles = (a, b) => {
-	b = dominique.mapify(b);
-	$(a, function(i) {
-		b.forEach((val, attr) => {
-			val = dominique.funcify(val, 'style', i);
+	$(a, i => {
+		$(b).forEach((val, attr) => {
+			val = val.constructor === Function ? val.call(i.style) : val;
+			
 			if (val === false) {
 				i.style.removeProperty(attr);
 			} else {

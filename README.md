@@ -2,58 +2,71 @@
 
 ## A micro DOM library.
 
-**Dominique** is a tiny JavaScript library of helper functions for the DOM, emphasizing plugin creation and manipulation of elements and attributes. **Note:**  Dominique is into Zen: she lives in the now and has no regrets. Include an <span title="ECMAScript">ES</span> polyfill at your discretion.
+**Dominique** is a tiny JavaScript library of helper functions for the <span title="Document Object Model">DOM</title>, emphasizing plugin creation and manipulation of elements and their attributes. **Note:**  Dominique is into Zen: she lives in the now and has no regrets. Include an <span title="ECMAScript">ES</span> polyfill at your discretion.
 
 ### Plugin creation.
 
 #### The `$` loop.
 
-Creates a custom plugin.
+Creates a custom plugin. In this example, `fn` creates a callback function for the plugin.
 
 ```js
 const myPlugin = (a, fn) => {
-	$(a, i => {
-		//doSomething(i);
-	}, fn);
+    $(a, (item, key) => {
+        //doSomething(key, item);
+    }, fn);
 };
 ```
 
-**Note:** In the above example, `fn` creates a callback function for the plugin.
-
-`$` can loop through a CSS selector, NodeList, HTMLCollection, HTMLElement, Set, or Array (items); Object or Map (keys); or Number (integers). Returns joined values for use with template literals:
+Loop through diverse collections and return joined values for convenience in templating:
 
 ```js
 $('ul.jedi-names', ul => {
-	ul.innerHTML = $(jedi, j => `<li>${j.name}</li>`);
+    ul.innerHTML = $(jediArr, j => `<li>${ j.name }</li>`);
 });
 ```
 
-Returns a single Element:
+`$` converts all collections to a Map for iteration. Return the Map:
 
 ```js
-$('#page')
+$('div').get(0)
 ```
 
 ### Elements.
 
-#### `create(selector[, callback])`
+#### `create(String[, callback])`
+
+Creates a new Element and returns it.
 
 ```js
 create('footer', function() {
-	this.textContent = '&copy; 2017 Dominique';
-	$('#page').appendChild(this);
+    this.textContent = '&copy; 2018 Dominique';
 });
 ```
 
-Returns the new element:
+#### `step(selector[, callback])`
+
+Selects for a single Element and returns it.
 
 ```js
-create('footer')
+step('body', function() {
+    this.id = 'home';
+});
+```
+
+#### `walk(collection[, callback])`
+
+Walks through a selector; returns a Set of elements.
+
+```js
+walk('.any', function() {
+    this.title = 'Any Element';
+});
 ```
 
 ### Attributes.
 
-**Note:** In all **attributes** functions, an object literal may be used in place of `Map`. Returned values are expected from callbacks.
+**Note:** In all **attributes** functions, object literal notation may be used in place of `new Map()`. Returned values are expected from callbacks.
 
 #### `attributes(selector, Map | Object)`
 
@@ -61,10 +74,10 @@ Sets or removes one or more attributes. `this` references the `attributes` objec
 
 ```js
 attributes('a', new Map()
-	.set('role', false)
-	.set('href', function() {
-		return '#' + this.title.value;
-	})
+    .set('role', false)
+    .set('href', function() {
+        return '#' + this.title.value;
+    })
 );
 ```
 
@@ -73,17 +86,19 @@ attributes('a', new Map()
 Adds, removes, replaces, or toggles one or more classes. `this` references the `classList` object.
 
 ```js
-classes('body', {
-	'replace-me': 'replaced',
-	toggled() { return this.contains('toggled') ? false : true }
-});
+classes('body', new Map()
+	.set('replace-me', 'replaced')
+	.set('toggled', function() {
+		return this.contains('toggled') ? false : true }
+	})
+);
 ```
 
 **Note:** Dominique provides a shorthand for toggling a class:
 
 ```js
 classes('body', new Map()
-	.set('toggled', {})
+    .set('toggled', {})
 );
 ```
 
@@ -92,20 +107,15 @@ classes('body', new Map()
 Adds one or more `dataset` properties (and their corresponding `data-*` attributes). `this` references the `dataset` object.
 
 ```js
-properties('body', {
-	username: loginHandler.user,
-	admin() { return this.username === 'Dominique' ? true : false }
-});
-
 properties('body', new Map()
-	.set('username', loginHandler.user)
-	.set('admin', function() {
-		return this.username === 'Dominique' ? true : false;
-	})
+    .set('username', loginHandler.user)
+    .set('admin', function() {
+        return this.username === 'Dominique' ? true : false;
+    })
 );
 ```
 
-**Note:** A value of `false`, unlike the other attribute functions, does not remove the property.
+**Note:** Unlike the other **attributes** functions, a value of `false` does not remove the property.
 
 #### `styles(selector, Map | Object)`
 
@@ -113,9 +123,9 @@ Sets or removes one or more styles. `this` references the `style` object.
 
 ```js
 styles('header', new Map(
-	.set('color', function() {
-		return this.background === 'darkred' ? 'white' : false;
-	})
+    .set('color', function() {
+        return this.background === 'darkred' ? 'white' : false;
+    })
 );
 ```
 
@@ -125,7 +135,7 @@ Pretty sweet, huh?
 
 ### Okay, um&hellip; filesize?
 
-Oh, yeah: the filesize of Dominique, minified, comes screaming in at less than one and a half kaybees. Woo-hoo!
+Oh, yeah: the filesize of Dominique, minified, comes screaming in at less than one and a half kaybee. Woo-hoo!
 
 ### Will you, won&rsquo;t you
 
