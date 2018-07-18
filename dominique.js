@@ -47,6 +47,58 @@ let $ = (a, foo, fn) => {
 
 	/** elements **/
 
+//after
+
+let after = (a, fn) => {
+	let newSet = new Set();
+	
+	$(a, i => {
+		let val = i.nextElementSibling;
+		
+		if (val) {
+			newSet.add(val);
+		}
+	});
+	
+	$(newSet, i => {}, fn);
+	
+	return newSet;
+};
+
+//attach
+
+let attach = (a, b, fn, y = false, z = false) => {
+	$(a, i => {
+		if (y && y.constructor === String) {
+			i.addEventListener(b, function(e) {
+				if (e.target.matches(y)) {
+					fn.call(e.target, e);
+				}
+			}, z);
+		} else {
+			i.addEventListener(b, fn, y);
+		}
+	});
+};
+
+//before
+
+let before = (a, fn) => {
+	let newSet = new Set();
+	
+	$(a, i => {
+		let val = i.previousElementSibling;
+		
+		if (val) {
+			newSet.add(val);
+		}
+	});
+	
+	$(newSet, i => {}, fn);
+	
+	return newSet;
+};
+
 //create
 
 let create = (a, fn) => {
@@ -58,6 +110,14 @@ let create = (a, fn) => {
 	$(a, function() {}, fn);
 	
 	return a;
+};
+
+//detach
+
+let detach = (a, b, c) => {
+	$(a, i => {
+		i.removeEventListener(b, c)
+	})
 };
 
 //step
@@ -112,14 +172,18 @@ let classes = (a, b) => {
 		$(b).forEach((val, attr) => {
 			val = val.constructor === Function ? val.call(i.classList) : val;
 			
-			if (!val) {
-				i.classList.remove(attr);
-			} else if (val === true) {
-				i.classList.add(attr);
-			} else if (val.constructor === Object) {
-				i.classList.toggle(attr);
+			if (b.constructor === Array || b.constructor === Set) {
+				i.classList.add(val);
 			} else {
-				i.classList.replace(attr, val);
+				if (!val) {
+					i.classList.remove(attr);
+				} else if (val === true) {
+					i.classList.add(attr);
+				} else if (val.constructor === Object) {
+					i.classList.toggle(attr);
+				} else {
+					i.classList.replace(attr, val);
+				}
 			}
 		});
 	});
@@ -127,7 +191,7 @@ let classes = (a, b) => {
 
 //properties
 
-let properties = function(a, b) {
+let properties = (a, b) => {
 	$(a, i => {
 		$(b).forEach((val, prop) => {
 			val = val.constructor === Function ? val.call(i.dataset) : val;
