@@ -1,12 +1,12 @@
 /*** Dominique, the micro DOM library     ***/
 /*** https://github.com/lbispo/dominique/ ***/
 
-	/** dominique function foundry **/
+	/** $: dominique function foundry **/
 
 let $ = (a, foo, fn) => {
 	a = a || {};
 	
-	let i, newArr, newMap = new Map(), k = a.constructor;
+	let i, j, newArr, newMap = new Map(), k = a.constructor;
 	
 	if (k === String) {
 		a = document.querySelectorAll(a);
@@ -20,7 +20,7 @@ let $ = (a, foo, fn) => {
 		newArr.forEach((item, i) => {
 			newMap.set(i, item);
 		});
-	} else if (k === Object) {
+	} else if (k === Object || k === DOMStringMap) {
 		for (i in a) {
 			newMap.set(i, a[i]);
 		}
@@ -36,20 +36,38 @@ let $ = (a, foo, fn) => {
 		return newMap;
 	} else {
 		return [...newMap.keys()].map(i => {
+			j = newMap.get(i);
+			
 			if (fn) {
-				fn.call(newMap.get(i));
+				fn.call(j, j);
 			}
 			
-			return foo(newMap.get(i), i);
+			return foo(j, i);
 		}).join('');
 	}
 };
 
-	/** elements **/
+	/** elements: new elements **/
 
-//after
+//create
 
-let after = (a, fn) => {
+let create = (a, fn) => {
+	if (a === '') {
+		a = false;
+	}
+	
+	a = document.createElement(a);
+	
+	$(a, function() {}, fn);
+	
+	return a;
+};
+
+	/** elements: walking the dom **/
+
+//follows
+
+let follows = (a, fn) => {
 	let newSet = new Set();
 	
 	$(a, i => {
@@ -65,25 +83,9 @@ let after = (a, fn) => {
 	return newSet;
 };
 
-//attach
+//precedes
 
-let attach = (a, b, fn, y = false, z = false) => {
-	$(a, i => {
-		if (y && y.constructor === String) {
-			i.addEventListener(b, function(e) {
-				if (e.target.matches(y)) {
-					fn.call(e.target, e);
-				}
-			}, z);
-		} else {
-			i.addEventListener(b, fn, y);
-		}
-	});
-};
-
-//before
-
-let before = (a, fn) => {
+let precedes = (a, fn) => {
 	let newSet = new Set();
 	
 	$(a, i => {
@@ -99,31 +101,11 @@ let before = (a, fn) => {
 	return newSet;
 };
 
-//create
-
-let create = (a, fn) => {
-	if (a === '') {
-		a = false;
-	}
-	a = document.createElement(a);
-	
-	$(a, function() {}, fn);
-	
-	return a;
-};
-
-//detach
-
-let detach = (a, b, c) => {
-	$(a, i => {
-		i.removeEventListener(b, c)
-	})
-};
-
 //step
 
 let step = (a, fn) => {
 	a = $(a).get(0);
+	
 	a = a || {};
 	
 	$(a, i => {}, fn);
@@ -147,6 +129,32 @@ let walk = (a, fn) => {
 	return newSet;
 };
 
+	/** elements: events **/
+
+//attach
+
+let attach = (a, b, fn, y = false, z = false) => {
+	$(a, i => {
+		if (y && y.constructor === String) {
+			i.addEventListener(b, function(e) {
+				if (e.target.matches(y)) {
+					fn.call(e.target, e);
+				}
+			}, z);
+		} else {
+			i.addEventListener(b, fn, y);
+		}
+	});
+};
+
+//detach
+
+let detach = (a, b, c) => {
+	$(a, i => {
+		i.removeEventListener(b, c)
+	})
+};
+
 	/** attributes **/
 
 //attributes
@@ -154,7 +162,7 @@ let walk = (a, fn) => {
 let attributes = (a, b) => {
 	$(a, i => {
 		$(b).forEach((val, attr) => {
-			val = val.constructor === Function ? val.call(i.attributes) : val;
+			val = val && val.constructor === Function ? val.call(i, i.attributes) : val;
 			
 			if (val === false) {
 				i.removeAttribute(attr);
@@ -170,7 +178,7 @@ let attributes = (a, b) => {
 let classes = (a, b) => {
 	$(a, i => {
 		$(b).forEach((val, attr) => {
-			val = val.constructor === Function ? val.call(i.classList) : val;
+			val = val && val.constructor === Function ? val.call(i, i.classList) : val;
 			
 			if (b.constructor === Array || b.constructor === Set) {
 				i.classList.add(val);
@@ -194,7 +202,7 @@ let classes = (a, b) => {
 let properties = (a, b) => {
 	$(a, i => {
 		$(b).forEach((val, prop) => {
-			val = val.constructor === Function ? val.call(i.dataset) : val;
+			val = val && val.constructor === Function ? val.call(i, i.dataset) : val;
 			
 			i.dataset[prop] = val;
 		});
@@ -206,7 +214,7 @@ let properties = (a, b) => {
 let styles = (a, b) => {
 	$(a, i => {
 		$(b).forEach((val, attr) => {
-			val = val.constructor === Function ? val.call(i.style) : val;
+			val = val && val.constructor === Function ? val.call(i, i.style) : val;
 			
 			if (val === false) {
 				i.style.removeProperty(attr);
