@@ -34,6 +34,12 @@ $('ul.jedi-names', ul => {
 })
 ```
 
+Return a property of a selector:
+
+```js
+$('div', 'textContent')
+```
+
 `$` converts all collections to a Map for iteration.
 
 ```js
@@ -44,29 +50,29 @@ $('div').get(0)
 
 #### New elements.
 
-##### `create(String[, callback])`
+##### `create(nodeName[, callback])`
 
 Creates a new Element and returns it.
 
 ```js
 create('footer', footer => {
-    footer.innerHTML = '&copy; 2018 Dominique'
+    doSomething(footer)
 })
 ```
 
 #### Walking the DOM.
 
-##### `follows(selector[, callback])`
+##### `aft(selector[, callback])`
 
 Walks through a selector&rsquo;s next sibling elements; returns a Set of elements.
 
 ```js
-follows('.any', el => {
+aft('.any', el => {
     doSomething(el)
 })
 ```
 
-##### `precedes(selector[, callback])`
+##### `fore(selector[, callback])`
 
 Walks through a selector&rsquo;s previous sibling elements; returns a Set of elements.
 
@@ -80,32 +86,44 @@ Walks through a selector or collection; returns a Set of elements.
 
 #### Events.
 
-##### `attach(selector, type, callback[, delegate &| options])`
+##### `attach(selector, type, callback[, propogation])`
 
-Adds an event listener. Set a delegate and/or options with the last two, optional parameters. Variable references the Event object.
+Adds an event listener. Variable references the Event object.
 
 ```js
 attach(document, 'click', e => {
     e.preventDefault()
-}, 'a', true)
+}, true)
 ```
 
-##### `detach(selector, type, named callback)`
+##### `detach(selector, type, named callback[, propogation])`
 
-Removes an event listener. The callback must be named (both here and where the listener was added).
+Removes an event listener added via `attach` or `addEventListener`. The callback must be named (both here and where the listener was added), arguments must be consistent.
+
+##### `delegate(selector, selector, eventType, callback[, propagation])`
+
+Delegates an event:
+
+```js
+delegate('body', 'button', 'click', e => {
+	console.log(e.path)
+}, true)
+```
+
+**Note:** Events added with `delegate` cannot be removed. If you might need to do so, use `attach` instead.
 
 ### Attributes.
 
-**Note:** In all **attributes** functions, object literal notation may be used in place of the Map. Returned values are expected from callbacks.
+**Note:** Returned values are expected from callbacks.
 
 ##### `attributes(selector, library)`
 
-Sets or removes one or more attributes. Variable references the `attributes` object.
+Sets or removes one or more attributes. Callback variable references the `attributes` object.
 
 ```js
 attributes('a', new Map()
     .set('role', false)
-    .set('href', attrs => '#' + attrs.title.value;)
+    .set('href', attrs => '#' + attrs.title.value)
 )
 ```
 
@@ -120,17 +138,26 @@ classes('body', new Set()
 )
 ```
 
-With a library: adds, removes, replaces, or toggles one or more classes. Variable references the `classList` object.
+With a library: adds, removes, replaces, or toggles one or more classes. Callback variable references the `classList` object.
+
+```js
+classes('body', new Map()
+	.set('dominique', true)
+	.set('no-js', false)
+	.set('replace-this', 'with-this')
+	.set('toggler', cl => !cl.contains('toggler')
+)
+```
 
 ##### `properties(selector, library)`
 
-Adds one or more `dataset` properties (and their corresponding `data-*` attributes). Variable references the `dataset` object.
+Adds one or more `dataset` properties (and their corresponding `data-*` attributes). Callback variable references the `dataset` object.
 
 **Note:** Unlike the other **attributes** functions, a value of `false` does not remove the property.
 
 ##### `styles(selector, library)`
 
-Sets or removes one or more styles. Variable references the `style` object.
+Sets or removes one or more styles. Callback variable references the `style` object.
 
 ### Summary.
 
@@ -138,7 +165,7 @@ Pretty sweet, huh?
 
 #### Okay, um&hellip; filesize?
 
-Oh, yeah: the filesize of Dominique, minified, comes screaming in at less than two kaybees. Woo-hoo!
+Oh, yeah: the filesize of Dominique minified comes screaming in at less than two kaybees. Woo-hoo!
 
 #### Will you, won&rsquo;t you?
 

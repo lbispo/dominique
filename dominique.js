@@ -5,16 +5,15 @@
 
 let $ = (a, foo, fn) => {
 	a = a || {};
-	
-	let i, j, newArr, newMap = new Map(), k = a.constructor;
+	let i, newArr, newMap = new Map(), newerMap = new Map(), k = a.constructor;
 	
 	if (k === String) {
 		a = document.querySelectorAll(a);
-		for (let i = 0; i < a.length; i++) {
+		for (i = 0; i < a.length; i++) {
 			newMap.set(i, a[i]);
 		}
 	} else if (k === Map) {
-		newMap = a;
+		newMap = new Map(a);
 	} else if (typeof a[Symbol.iterator] === 'function') {
 		newArr = Array.from(a);
 		newArr.forEach((item, i) => {
@@ -32,18 +31,28 @@ let $ = (a, foo, fn) => {
 		newMap.set(0, a);
 	}
 	
+	newMap.forEach((item, key) => {
+		newMap[key] = item;
+	});
+	
 	if (!foo) {
 		return newMap;
 	} else {
-		return [...newMap.keys()].map(i => {
-			j = newMap.get(i);
+		if (foo.constructor === Function) {
+			return [...newMap.keys()].map(i => {
+				if (fn) {
+					fn.call(newMap.get(i), newMap.get(i));
+				}
 			
-			if (fn) {
-				fn.call(j, j);
-			}
+				return foo(newMap.get(i), i);
+			}).join('');
+		} else {
+			newMap.forEach((val, i) => {
+				newerMap.set(i, val[foo]);
+			});
 			
-			return foo(j, i);
-		}).join('');
+			return newerMap;
+		}
 	}
 };
 
@@ -53,7 +62,7 @@ let $ = (a, foo, fn) => {
 
 let create = (a, fn) => {
 	if (a === '') {
-		a = false;
+		return undefined;
 	}
 	
 	a = document.createElement(a);
@@ -65,34 +74,14 @@ let create = (a, fn) => {
 
 	/** elements: walking the dom **/
 
-//follows
+/////walk
 
-let follows = (a, fn) => {
+let walk = (a, fn) => {
 	let newSet = new Set();
 	
 	$(a, i => {
-		let val = i.nextElementSibling;
-		
-		if (val) {
-			newSet.add(val);
-		}
-	});
-	
-	$(newSet, i => {}, fn);
-	
-	return newSet;
-};
-
-//precedes
-
-let precedes = (a, fn) => {
-	let newSet = new Set();
-	
-	$(a, i => {
-		let val = i.previousElementSibling;
-		
-		if (val) {
-			newSet.add(val);
+		if (i instanceof HTMLElement) {
+			newSet.add(i);
 		}
 	});
 	
@@ -113,14 +102,16 @@ let step = (a, fn) => {
 	return a;
 };
 
-/////walk
+//fore
 
-let walk = (a, fn) => {
+let fore = (a, fn) => {
 	let newSet = new Set();
 	
 	$(a, i => {
-		if (i instanceof HTMLElement) {
-			newSet.add(i);
+		let val = i.previousElementSibling;
+		
+		if (val) {
+			newSet.add(val);
 		}
 	});
 	
@@ -129,30 +120,52 @@ let walk = (a, fn) => {
 	return newSet;
 };
 
-	/** elements: events **/
+//aft
+
+let aft = (a, fn) => {
+	let newSet = new Set();
+	
+	$(a, i => {
+		let val = i.nextElementSibling;
+		
+		if (val) {
+			newSet.add(val);
+		}
+	});
+	
+	$(newSet, i => {}, fn);
+	
+	return newSet;
+};
+
+	/** events **/
 
 //attach
 
-let attach = (a, b, fn, y = false, z = false) => {
+let attach = (a, eventType, fn, x) => {
 	$(a, i => {
-		if (y && y.constructor === String) {
-			i.addEventListener(b, function(e) {
-				if (e.target.matches(y)) {
-					fn.call(e.target, e);
-				}
-			}, z);
-		} else {
-			i.addEventListener(b, fn, y);
-		}
+		i.addEventListener(eventType, fn, x);
 	});
 };
 
 //detach
 
-let detach = (a, b, c) => {
+let detach = (a, eventType, fn, x) => {
 	$(a, i => {
-		i.removeEventListener(b, c)
-	})
+		i.removeEventListener(eventType, fn, x)
+	});
+};
+
+//delegate
+
+let delegate = (a, b, eventType, fn, x) => {
+	$(a, i => {
+		i.addEventListener(eventType, e => {
+			if (!e.target.matches(b)) return;
+			
+			fn.call(e.target, e);
+		}, x);
+	});
 };
 
 	/** attributes **/
