@@ -2,19 +2,21 @@
 
 ## A micro DOM library.
 
-**Dominique** is a tiny JavaScript library of helper functions for the <span title="Document Object Model">DOM</span>, emphasizing plugin creation and manipulation of elements and their properties. **Note:**  Dominique is into Zen; she lives in the now and has no regrets. Include an <span title="ECMAScript">ES</span> polyfill at your discretion.
+**Dominique** is a tiny JavaScript library of helper functions for the <span title="Document Object Model">DOM</span>, emphasizing plugin creation and looping convenience. **Note:**  Dominique is into Zen; she lives in the now and has no regrets. Include an <span title="ECMAScript">ES</span> polyfill at your discretion.
 
 ### Plugin creation.
 
-#### The `$` loop.
+#### The `$` loop and plugin factory.
+
+##### `$(selector | element | collection, fn[, var])`
 
 Creates a custom plugin. In this example, `fn` creates a callback function for the plugin.
 
 ```js
 const myPlugin = (a, fn) => {
-    $(a, (item, key) => {
-        doSomething(key, item)
-    }, fn)
+	$(a, (item, key) => {
+		doSomething(key, item)
+	}, fn)
 }
 ```
 
@@ -22,85 +24,83 @@ Use the plugin:
 
 ```js
 myPlugin('.any', any => {
-    doSomething(any)
+	doSomethingElse(any)
 })
 ```
 
 Loop through diverse collections and return joined values for convenience in templating:
 
 ```js
-$('ul.jedi-names', ul => {
-    ul.innerHTML = $(jediArr, j => `<li>${ j.name }</li>`)
+$('ul.monster-names', ul => {
+	ul.innerHTML = $(monsterArr, m => `<li>${ m.name }</li>`)
 })
 ```
 
-Return a property of a selector:
+##### `$(selector | element | collection[, ...strings])`
+
+Return a map of keys and items:
 
 ```js
-$('div', 'textContent')
+$('user-posts', 'dataset', 'username').forEach((user, i) => {
+	posters[i] = user
+})
+
+let op = $(posters).get(0)
 ```
 
-`$` converts all collections to a Map for iteration.
+#### All other Dominique functions
 
-```js
-$('div').get(0)
-```
+&hellip; are just plugins created with `$`. Scope is set on the selected elements; a callback variable can reference different things depending on the function.
 
 ### Elements.
 
-#### New elements.
+**Note:** All **Elements functions** return an element, set of elements, or document fragment.
 
-##### `create(nodeName[, callback])`
+##### `aft(selector | element[, callback])`
 
-Creates a new Element and returns it.
-
-```js
-create('footer', footer => {
-    doSomething(footer)
-})
-```
-
-#### Walking the DOM.
-
-##### `aft(selector[, callback])`
-
-Walks through a selector&rsquo;s next sibling elements; returns a Set of elements.
+Walks through a selector&rsquo;s next sibling elements.
 
 ```js
 aft('.any', el => {
-    doSomething(el)
+	doSomething(el)
 })
 ```
 
-##### `fore(selector[, callback])`
+##### `create(nodeName[, fn])`
 
-Walks through a selector&rsquo;s previous sibling elements; returns a Set of elements.
+Creates a new Element.
 
-##### `step(selector[, callback])`
+```js
+create('footer', footer => {
+	doSomething(footer)
+})
+```
 
-Selects for a single Element and returns it.
+##### `fore(selector | element[, fn])`
 
-##### `walk(selector | collection[, callback])`
+Walks through a selector&rsquo;s previous sibling elements.
 
-Walks through a selector or collection; returns a Set of elements.
+##### `step(selector | element[, fn])`
+
+Selects for a single Element.
+
+##### `walk(selector | element | collection[, fn])`
+
+Walks through a selector, or pulls elements from a collection.
 
 #### Events.
 
-##### `attach(selector, type, callback[, propogation])`
+##### `attach(selector, type, fn[, propogation])`
 
 Adds an event listener. Variable references the Event object.
 
 ```js
 attach(document, 'click', e => {
-    e.preventDefault()
+	e.preventDefault()
 }, true)
 ```
 
-##### `detach(selector, type, named callback[, propogation])`
-
-Removes an event listener added via `attach` or `addEventListener`. The callback must be named (both here and where the listener was added), arguments must be consistent.
-
-##### `delegate(selector, selector, eventType, callback[, propagation])`
+##### `delegate(selector, selector, eventType, fn[, propagation])`
 
 Delegates an event:
 
@@ -112,48 +112,64 @@ delegate('body', 'button', 'click', e => {
 
 **Note:** Events added with `delegate` cannot be removed. If you might need to do so, use `attach` instead.
 
+##### `detach(selector, type, named fn[, propogation])`
+
+Removes an event listener added via `attach` or `addEventListener`. The callback must be named (both here and where the listener was added); arguments must be consistent.
+
 ### Attributes.
 
 **Note:** Returned values are expected from callbacks.
 
 ##### `attributes(selector, library)`
 
-Sets or removes one or more attributes. Callback variable references the `attributes` object.
+Sets one or more attributes. Callback variable references the `attributes` object.
 
 ```js
 attributes('a', new Map()
-    .set('role', false)
-    .set('href', attrs => '#' + attrs.title.value)
+	.set(‘role’, ‘button’)
+	.set(‘href’, attrs => ‘#’ + attrs.title.value)
 )
 ```
 
 ##### `classes(selector, collection | library)`
 
-With a collection: adds one or more classes:
+With a collection: adds one or more classes.
 
 ```js
 classes('body', new Set()
-    .add('dominique')
-    .add('ma-cherie-amour')
+	.add(‘dominique’)
+	.add(‘ma-cherie-amour’)
 )
 ```
 
-With a library: adds, removes, replaces, or toggles one or more classes. Callback variable references the `classList` object.
+With a library: adds, removes, replaces, or toggles one or more classes. Callback variable references `classList`.
 
 ```js
 classes('body', new Map()
-	.set('dominique', true)
-	.set('no-js', false)
-	.set('replace-this', 'with-this')
-	.set('toggler', cl => !cl.contains('toggler')
+	.set(‘dominique’, true)
+	.set(‘no-js’, false)
+	.set(‘replace-this’, ‘with-this’)
+	.set(‘toggler’, cl => !cl.contains(‘toggler’)
 )
 ```
 
+A shorthand for adding a class:
+
+```js
+classes('body', 'dominique')
+```
+
+A shorthand for toggling a class:
+
+```js
+classes('body', { toggler: {} })
+```
+
+Returns a Map of elements and `className` properties.
+
 ##### `properties(selector, library)`
 
-Adds one or more `dataset` properties (and their corresponding `data-*` attributes). Callback variable references the `dataset` object.
-
-**Note:** Unlike the other **attributes** functions, a value of `false` does not remove the property.
+Adds one or more `dataset` properties (and their corresponding `data-*` attributes). Callback variable references `dataset`.
 
 ##### `styles(selector, library)`
 

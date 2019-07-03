@@ -3,7 +3,7 @@
 
 	/** $: dominique function foundry **/
 
-let $ = (a, foo, fn) => {
+let $ = (a, ...args) => {
 	a = a || {};
 	let i, newArr, newMap = new Map(), newerMap = new Map(), k = a.constructor;
 	
@@ -30,25 +30,40 @@ let $ = (a, foo, fn) => {
 	} else {
 		newMap.set(0, a);
 	}
-	
-	newMap.forEach((item, key) => {
-		newMap[key] = item;
-	});
-	
-	if (!foo) {
+		
+	if (!args[0]) {
+		newMap.forEach((item, key) => {
+			newMap[key] = item;
+		});
+		
 		return newMap;
 	} else {
-		if (foo.constructor === Function) {
+		if (args[0].constructor === Function) {
 			return [...newMap.keys()].map(i => {
-				if (fn) {
-					fn.call(newMap.get(i), newMap.get(i));
+				if (args[1]) {
+					args[1].call(newMap.get(i), newMap.get(i));
 				}
 			
-				return foo(newMap.get(i), i);
+				return args[0](newMap.get(i), i);
 			}).join('');
 		} else {
 			newMap.forEach((val, i) => {
-				newerMap.set(i, val[foo]);
+				let reducer = function(accumulator, item) {
+					if (val.constructor === Set || val.constructor === Map) {
+						newerMap.set(i, accumulator.get(item));
+					
+						return accumulator.get(item) || {};
+					} else {
+						newerMap.set(i, accumulator[item]);
+					
+						return accumulator[item] || {};
+					}
+				}
+				args.reduce(reducer, val);
+			});
+			
+			newerMap.forEach((item, key) => {
+				newerMap[key] = item;
 			});
 			
 			return newerMap;
@@ -56,7 +71,25 @@ let $ = (a, foo, fn) => {
 	}
 };
 
-	/** elements: new elements **/
+	/** elements **/
+
+//aft
+
+let aft = (a, fn) => {
+	let newSet = new Set();
+	
+	$(a, i => {
+		let val = i.nextElementSibling;
+		
+		if (val) {
+			newSet.add(val);
+		}
+	});
+	
+	$(newSet, i => {}, fn);
+	
+	return newSet;
+};
 
 //create
 
@@ -68,36 +101,6 @@ let create = (a, fn) => {
 	a = document.createElement(a);
 	
 	$(a, function() {}, fn);
-	
-	return a;
-};
-
-	/** elements: walking the dom **/
-
-/////walk
-
-let walk = (a, fn) => {
-	let newSet = new Set();
-	
-	$(a, i => {
-		if (i instanceof HTMLElement) {
-			newSet.add(i);
-		}
-	});
-	
-	$(newSet, i => {}, fn);
-	
-	return newSet;
-};
-
-//step
-
-let step = (a, fn) => {
-	a = $(a).get(0);
-	
-	a = a || {};
-	
-	$(a, i => {}, fn);
 	
 	return a;
 };
@@ -120,22 +123,96 @@ let fore = (a, fn) => {
 	return newSet;
 };
 
-//aft
+//step
 
-let aft = (a, fn) => {
+let step = (a, fn) => {
+	a = $(a).get(0);
+	
+	a = a || {};
+	
+	$(a, i => {}, fn);
+	
+	return a;
+};
+
+/////walk
+
+let walk = (a, fn) => {
 	let newSet = new Set();
 	
 	$(a, i => {
-		let val = i.nextElementSibling;
-		
-		if (val) {
-			newSet.add(val);
+		if (i instanceof HTMLElement) {
+			newSet.add(i);
 		}
 	});
 	
 	$(newSet, i => {}, fn);
 	
 	return newSet;
+};
+
+	/** attributes **/
+
+//attributes
+
+let attributes = (a, b) => {
+	$(a, i => {
+		$(b, (val, attr) => {
+			val = val && val.constructor === Function ? val.call(i, i.attributes) : val;
+			
+			i.setAttribute(attr, val);
+		});
+	});
+};
+
+//classes
+
+let classes = (a, b) => {
+	$(a, i => {
+		if (b && !b.forEach && b.constructor !== Object) return;
+		
+		$(b, (val, attr) => {
+			val = val && val.constructor === Function ? val.call(i, i.classList) : val;
+		
+			if (b.constructor === Array || b.constructor === Set) {
+				i.classList.add(val);
+			} else {
+				if (!val) {
+					i.classList.remove(attr);
+				} else if (val === true) {
+					i.classList.add(attr);
+				} else if (val.constructor === Object) {
+					i.classList.toggle(attr);
+				} else {
+					i.classList.replace(attr, val);
+				}
+			}
+		});
+	});
+};
+
+//properties
+
+let properties = (a, b) => {
+	$(a, i => {
+		$(b, (val, prop) => {
+			val = val && val.constructor === Function ? val.call(i, i.dataset) : val;
+			
+			i.dataset[prop] = val;
+		});
+	});
+};
+
+//styles
+
+let styles = (a, b) => {
+	$(a, i => {
+		$(b, (val, attr) => {
+			val = val && val.constructor === Function ? val.call(i, i.style) : val;
+			
+			i.style[attr] = val;
+		});
+	});
 };
 
 	/** events **/
@@ -165,75 +242,5 @@ let delegate = (a, b, eventType, fn, x) => {
 			
 			fn.call(e.target, e);
 		}, x);
-	});
-};
-
-	/** attributes **/
-
-//attributes
-
-let attributes = (a, b) => {
-	$(a, i => {
-		$(b).forEach((val, attr) => {
-			val = val && val.constructor === Function ? val.call(i, i.attributes) : val;
-			
-			if (val === false) {
-				i.removeAttribute(attr);
-			} else {
-				i.setAttribute(attr, val);
-			}
-		});
-	});
-};
-
-//classes
-
-let classes = (a, b) => {
-	$(a, i => {
-		$(b).forEach((val, attr) => {
-			val = val && val.constructor === Function ? val.call(i, i.classList) : val;
-			
-			if (b.constructor === Array || b.constructor === Set) {
-				i.classList.add(val);
-			} else {
-				if (!val) {
-					i.classList.remove(attr);
-				} else if (val === true) {
-					i.classList.add(attr);
-				} else if (val.constructor === Object) {
-					i.classList.toggle(attr);
-				} else {
-					i.classList.replace(attr, val);
-				}
-			}
-		});
-	});
-};
-
-//properties
-
-let properties = (a, b) => {
-	$(a, i => {
-		$(b).forEach((val, prop) => {
-			val = val && val.constructor === Function ? val.call(i, i.dataset) : val;
-			
-			i.dataset[prop] = val;
-		});
-	});
-};
-
-//styles
-
-let styles = (a, b) => {
-	$(a, i => {
-		$(b).forEach((val, attr) => {
-			val = val && val.constructor === Function ? val.call(i, i.style) : val;
-			
-			if (val === false) {
-				i.style.removeProperty(attr);
-			} else {
-				i.style[attr] = val;
-			}
-		});
 	});
 };
